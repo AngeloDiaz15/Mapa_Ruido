@@ -114,7 +114,7 @@
     var popupContent =
       '<b>' + nombre + '</b><br>' +
       'ID: ' + id + '<br>' +
-      '<button class="btn-grafico" onclick="abrirGrafico(' + id + ')">Ver gráfico</button>';
+      '<button class="btn-grafico" onclick="abrirGrafico(' + id + ', \'' + nombre + '\')">Ver gráfico</button>';
 
     layer.bindPopup(popupContent);
   }
