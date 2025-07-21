@@ -1,85 +1,101 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Gráfico de Mediciones</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px;
-      background: #f8f9fa;
+      padding: 1em;
     }
-    h2 { text-align: center; }
     #grafico {
-      max-width: 900px;
-      margin: auto;
+      max-width: 100%;
+      height: auto;
+    }
+    label, input {
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
-  <h2 id="titulo"></h2>
-  <canvas id="grafico" width="900" height="450"></canvas>
+  <h2 id="titulo">Gráfico de Mediciones</h2>
+
+  <div style="margin-bottom: 1em;">
+    <label for="fechaInicio">Desde:</label>
+    <input type="date" id="fechaInicio">
+    <label for="fechaFin">Hasta:</label>
+    <input type="date" id="fechaFin">
+    <button onclick="filtrarPorFecha()">Filtrar</button>
+  </div>
+
+  <canvas id="grafico" width="800" height="400"></canvas>
 
   <script>
-    // Leer id_lugar de la URL
+    let mediciones = [];
+    let chart;
+
     const params = new URLSearchParams(window.location.search);
     const idLugar = params.get("id");
+    const nombreLugar = params.get("nombre") || "Ubicación";
 
-    if (!idLugar) {
-      document.getElementById("titulo").textContent = "No se especificó un lugar.";
-    } else {
-      document.getElementById("titulo").textContent = "Mediciones de Ruido - Lugar " + idLugar;
+    document.getElementById("titulo").textContent = "Mediciones en " + nombreLugar;
 
-      fetch("mediciones.json")
-        .then(r => r.json())
-        .then(data => {
-          const registros = data.filter(d => d.id_lugar == idLugar);
+    fetch("mediciones.json")
+      .then(response => response.json())
+      .then(data => {
+        mediciones = data.filter(d => d.id_lugar == idLugar);
+        renderizarGrafico(mediciones);
+      })
+      .catch(error => {
+        console.error("Error al cargar mediciones.json:", error);
+      });
 
-          // Ordenar por fecha y hora
-          registros.sort((a, b) => {
-            const A = new Date(`${a.fecha}T${a.hora}`);
-            const B = new Date(`${b.fecha}T${b.hora}`);
-            return A - B;
-          });
+    function renderizarGrafico(datos) {
+      const etiquetas = datos.map(d => `${d.fecha} ${d.hora}`);
+      const valores = datos.map(d => d.valor);
 
-          const etiquetas = registros.map(d => `${d.fecha} ${d.hora}`);
-          const valores = registros.map(d => d.valor);
+      if (chart) chart.destroy();
 
-          const ctx = document.getElementById("grafico").getContext("2d");
-          new Chart(ctx, {
-            type: "line",
-            data: {
-              labels: etiquetas,
-              datasets: [{
-                label: "Nivel de Ruido (dB)",
-                data: valores,
-                borderColor: "rgba(75, 192, 192, 1)",
-                backgroundColor: "rgba(75, 192, 192, 0.15)",
-                borderWidth: 2,
-                pointRadius: 3,
-                tension: 0.25
-              }]
+      chart = new Chart(document.getElementById("grafico"), {
+        type: "line",
+        data: {
+          labels: etiquetas,
+          datasets: [{
+            label: "Nivel de Ruido (dB)",
+            data: valores,
+            borderColor: "blue",
+            backgroundColor: "lightblue",
+            fill: false,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              title: { display: true, text: "Fecha y Hora" }
             },
-            options: {
-              responsive: true,
-              scales: {
-                x: {
-                  title: { display: true, text: "Fecha y hora" },
-                  ticks: { maxRotation: 80, minRotation: 30 }
-                },
-                y: {
-                  beginAtZero: false,
-                  title: { display: true, text: "dB(A)" }
-                }
-              }
+            y: {
+              title: { display: true, text: "dB(A)" },
+              beginAtZero: true
             }
-          });
-        })
-        .catch(err => {
-          console.error("Error al cargar mediciones.json:", err);
-          document.getElementById("titulo").textContent = "Error al cargar datos.";
-        });
+          }
+        }
+      });
+    }
+
+    function filtrarPorFecha() {
+      const inicio = document.getElementById("fechaInicio").value;
+      const fin = document.getElementById("fechaFin").value;
+
+      if (!inicio || !fin) {
+        alert("Por favor selecciona ambas fechas.");
+        return;
+      }
+
+      const filtradas = mediciones.filter(d => d.fecha >= inicio && d.fecha <= fin);
+      renderizarGrafico(filtradas);
     }
   </script>
 </body>
