@@ -166,9 +166,8 @@
 
   // ================= FUNCIÓN ABRIR GRAFICO =================
   // Abre grafico.html y pasa el id como parámetro
-  function abrirGrafico(id_lugar) {
-    // Importante: grafico.html debe existir en la raíz junto a index.html
-    var url = 'grafico.html?id=' + encodeURIComponent(id_lugar);
+  function abrirGrafico(id_lugar, nombreLugar) {
+    var url = 'grafico.html?id=' + encodeURIComponent(id_lugar) + '&nombre=' + encodeURIComponent(nombreLugar);
     window.open(url, '_blank', 'noopener');
   }
   </script>
