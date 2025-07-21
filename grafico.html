@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gráfico de mediciones</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <canvas id="grafico" width="600" height="400"></canvas>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const etiquetas = JSON.parse(params.get("labels"));
+    const datos = JSON.parse(params.get("data"));
+
+    new Chart(document.getElementById("grafico"), {
+      type: "line",
+      data: {
+        labels: etiquetas,
+        datasets: [{
+          label: "Nivel de ruido (dB)",
+          data: datos,
+          borderColor: "blue",
+          fill: false,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          title: {
+            display: true,
+            text: "Evolución del ruido"
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
