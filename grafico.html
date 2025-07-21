@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Gráfico de Mediciones</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -10,9 +10,7 @@
       margin: 40px;
       background: #f8f9fa;
     }
-    h2 {
-      text-align: center;
-    }
+    h2 { text-align: center; }
     #grafico {
       max-width: 900px;
       margin: auto;
@@ -20,71 +18,67 @@
   </style>
 </head>
 <body>
-  <h2>Gráfico de Mediciones de Ruido</h2>
+  <h2 id="titulo"></h2>
   <canvas id="grafico" width="900" height="450"></canvas>
 
   <script>
-    // Obtener el parámetro id de la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const idLugar = urlParams.get('id');
+    // Leer id_lugar de la URL
+    const params = new URLSearchParams(window.location.search);
+    const idLugar = params.get("id");
 
     if (!idLugar) {
-      alert("No se especificó un lugar en la URL.");
+      document.getElementById("titulo").textContent = "No se especificó un lugar.";
     } else {
-      fetch('mediciones.json')
-        .then(response => response.json())
+      document.getElementById("titulo").textContent = "Mediciones de Ruido - Lugar " + idLugar;
+
+      fetch("mediciones.json")
+        .then(r => r.json())
         .then(data => {
-          const filtradas = data.filter(d => d.id_lugar == idLugar);
+          const registros = data.filter(d => d.id_lugar == idLugar);
 
           // Ordenar por fecha y hora
-          filtradas.sort((a, b) => {
-            const fechaA = new Date(`${a.fecha}T${a.hora}`);
-            const fechaB = new Date(`${b.fecha}T${b.hora}`);
-            return fechaA - fechaB;
+          registros.sort((a, b) => {
+            const A = new Date(`${a.fecha}T${a.hora}`);
+            const B = new Date(`${b.fecha}T${b.hora}`);
+            return A - B;
           });
 
-          const labels = filtradas.map(m => `${m.fecha} ${m.hora}`);
-          const valores = filtradas.map(m => m.valor);
+          const etiquetas = registros.map(d => `${d.fecha} ${d.hora}`);
+          const valores = registros.map(d => d.valor);
 
-          // Dibujar gráfico
-          const ctx = document.getElementById('grafico').getContext('2d');
+          const ctx = document.getElementById("grafico").getContext("2d");
           new Chart(ctx, {
-            type: 'line',
+            type: "line",
             data: {
-              labels: labels,
+              labels: etiquetas,
               datasets: [{
-                label: 'Nivel de Ruido (dB)',
+                label: "Nivel de Ruido (dB)",
                 data: valores,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: "rgba(75, 192, 192, 1)",
+                backgroundColor: "rgba(75, 192, 192, 0.15)",
                 borderWidth: 2,
-                pointRadius: 4,
-                tension: 0.3,
+                pointRadius: 3,
+                tension: 0.25
               }]
             },
             options: {
               responsive: true,
               scales: {
                 x: {
-                  title: {
-                    display: true,
-                    text: 'Fecha y Hora'
-                  }
+                  title: { display: true, text: "Fecha y hora" },
+                  ticks: { maxRotation: 80, minRotation: 30 }
                 },
                 y: {
                   beginAtZero: false,
-                  title: {
-                    display: true,
-                    text: 'dB(A)'
-                  }
+                  title: { display: true, text: "dB(A)" }
                 }
               }
             }
           });
         })
         .catch(err => {
-          alert("Error al cargar los datos: " + err);
-          console.error(err);
+          console.error("Error al cargar mediciones.json:", err);
+          document.getElementById("titulo").textContent = "Error al cargar datos.";
         });
     }
   </script>
