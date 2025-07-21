@@ -1,40 +1,92 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gráfico de mediciones</title>
+  <meta charset="UTF-8">
+  <title>Gráfico de Mediciones</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f8f9fa;
+    }
+    h2 {
+      text-align: center;
+    }
+    #grafico {
+      max-width: 900px;
+      margin: auto;
+    }
+  </style>
 </head>
 <body>
-  <canvas id="grafico" width="600" height="400"></canvas>
+  <h2>Gráfico de Mediciones de Ruido</h2>
+  <canvas id="grafico" width="900" height="450"></canvas>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const etiquetas = JSON.parse(params.get("labels"));
-    const datos = JSON.parse(params.get("data"));
+    // Obtener el parámetro id de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idLugar = urlParams.get('id');
 
-    new Chart(document.getElementById("grafico"), {
-      type: "line",
-      data: {
-        labels: etiquetas,
-        datasets: [{
-          label: "Nivel de ruido (dB)",
-          data: datos,
-          borderColor: "blue",
-          fill: false,
-          tension: 0.2
-        }]
-      },
-      options: {
-        responsive: false,
-        plugins: {
-          title: {
-            display: true,
-            text: "Evolución del ruido"
-          }
-        }
-      }
-    });
+    if (!idLugar) {
+      alert("No se especificó un lugar en la URL.");
+    } else {
+      fetch('mediciones.json')
+        .then(response => response.json())
+        .then(data => {
+          const filtradas = data.filter(d => d.id_lugar == idLugar);
+
+          // Ordenar por fecha y hora
+          filtradas.sort((a, b) => {
+            const fechaA = new Date(`${a.fecha}T${a.hora}`);
+            const fechaB = new Date(`${b.fecha}T${b.hora}`);
+            return fechaA - fechaB;
+          });
+
+          const labels = filtradas.map(m => `${m.fecha} ${m.hora}`);
+          const valores = filtradas.map(m => m.valor);
+
+          // Dibujar gráfico
+          const ctx = document.getElementById('grafico').getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Nivel de Ruido (dB)',
+                data: valores,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.3,
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: 'Fecha y Hora'
+                  }
+                },
+                y: {
+                  beginAtZero: false,
+                  title: {
+                    display: true,
+                    text: 'dB(A)'
+                  }
+                }
+              }
+            }
+          });
+        })
+        .catch(err => {
+          alert("Error al cargar los datos: " + err);
+          console.error(err);
+        });
+    }
   </script>
 </body>
 </html>
