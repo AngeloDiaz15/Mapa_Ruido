@@ -104,50 +104,8 @@
         layer_OSMStandard_0;
         map.addLayer(layer_OSMStandard_0);
         function pop_ubicaciones_1(feature, layer) {
-    		layer.on({
-        		mouseout: function(e) {
-            			if (typeof layer.closePopup == 'function') {
-                			layer.closePopup();
-            			} else {
-                			layer.eachLayer(function(feature){
-                    				feature.closePopup();
-                			});
-           			}
-        		},
-        		mouseover: highlightFeature,
-        		click: function(e) {
-    				const idLugar = feature.properties['id_lugar'];
-
-    				fetch('mediciones.json')
-        				.then(response => response.json())
-        				.then(data => {
-            					const datosFiltrados = data.filter(d => d.id_lugar == idLugar);
-            					console.log("Datos filtrados:", datosFiltrados);
-
-            					// Ordena por fecha y hora
-            					datosFiltrados.sort((a, b) => {
-                					const dateA = new Date(`${a.fecha}T${a.hora}`);
-                					const dateB = new Date(`${b.fecha}T${b.hora}`);
-                					return dateA - dateB;
-            					});
-
-            					const etiquetas = datosFiltrados.map(d => `${d.fecha} ${d.hora}`);
-            					const valores = datosFiltrados.map(d => d.valor);
-
-            					mostrarGrafico(etiquetas, valores, feature.properties['nombre_lugar'] || `Lugar ${idLugar}`);
-        				});
-			}
-    		});
-
-    		// Popup original
-    		var popupContent = '<table>\
-        		<tr><td colspan="2"><strong>id_lugar</strong><br />' + feature.properties['id_lugar'] + '</td></tr>\
-        		<tr><td colspan="2"><strong>nombre_lugar</strong><br />' + feature.properties['nombre_lugar'] + '</td></tr>\
-        		<tr><td colspan="2"><strong>latitud</strong><br />' + feature.properties['latitud'] + '</td></tr>\
-        		<tr><td colspan="2"><strong>longitud</strong><br />' + feature.properties['longitud'] + '</td></tr>\
-        		</table>';
-    		var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-    		layer.bindPopup(content, { maxHeight: 400 });
+    		var popupContent = `<b>${feature.properties.nombre_lugar}</b><br><button onclick="mostrarGrafico(${feature.properties.id_lugar})">Ver gráfico</button>`;
+    		layer.bindPopup(popupContent);
 	}
 
         function style_ubicaciones_1_0() {
@@ -252,5 +210,75 @@
     			});
   		}
 	</script>
+	<script>
+	function cerrarModal() {
+  		document.getElementById("modal").style.display = "none";
+	}
+
+	function mostrarGrafico(id_lugar) {
+  		fetch('mediciones.json')
+    			.then(response => response.json())
+    			.then(data => {
+      				const datosFiltrados = data.filter(m => m.id_lugar == id_lugar);
+
+      				const etiquetas = datosFiltrados.map(d => `${d.fecha} ${d.hora}`);
+      				const valores = datosFiltrados.map(d => d.valor);
+
+      				const ctx = document.getElementById('graficoCanvas').getContext('2d');
+      				if (window.grafico) {
+        				window.grafico.destroy();
+      				}
+
+      				window.grafico = new Chart(ctx, {
+        				type: 'line',
+        				data: {
+          					labels: etiquetas,
+          					datasets: [{
+            						label: `Mediciones - Lugar ${id_lugar}`,
+            						data: valores,
+            						fill: false,
+            						borderColor: 'blue',
+            						tension: 0.3
+          					}]
+        				},
+        				options: {
+          					responsive: true
+        				}
+      				});
+
+      				// Mostrar modal
+      				document.getElementById("modal").style.display = "block";
+    			})
+    			.catch(error => {
+      				console.error('Error cargando mediciones.json:', error);
+    			});
+	}
+	</script>
+	<div id="modal" style="
+  		display: none;
+  		position: fixed;
+  		z-index: 1000;
+  		left: 0; top: 0;
+  		width: 100%; height: 100%;
+  		background-color: rgba(0,0,0,0.5);">
+
+  		<div style="
+    			background-color: #fff;
+    			margin: 10% auto;
+    			padding: 20px;
+    			width: 80%;
+    			max-width: 700px;
+    			border-radius: 8px;
+    			position: relative;">
+    
+    			<span onclick="cerrarModal()" style="
+      				position: absolute;
+      				top: 10px; right: 15px;
+      				font-size: 24px;
+      				cursor: pointer;">&times;</span>
+    
+    			<canvas id="graficoCanvas"></canvas>
+  		</div>
+	</div>    
     </body>
 </html>
