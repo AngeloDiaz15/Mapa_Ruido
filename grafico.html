@@ -44,7 +44,9 @@
     fetch("mediciones.json")
       .then(response => response.json())
       .then(data => {
-        mediciones = data.filter(d => d.id_lugar == idLugar);
+        mediciones = data
+          .filter(d => d.id_lugar == idLugar)
+          .sort((a, b) => new Date(`${a.fecha}T${a.hora}`) - new Date(`${b.fecha}T${b.hora}`));
         renderizarGrafico(mediciones);
       })
       .catch(error => {
@@ -95,7 +97,8 @@
       }
 
       const filtradas = mediciones.filter(d => d.fecha >= inicio && d.fecha <= fin);
-      renderizarGrafico(filtradas);
+      const ordenadas = filtradas.sort((a, b) => new Date(`${a.fecha}T${a.hora}`) - new Date(`${b.fecha}T${b.hora}`));
+      renderizarGrafico(ordenadas);
     }
   </script>
 </body>
